@@ -1,2 +1,2 @@
 # useful-tools
-Codes that has helped us, and might help others
+Codes that have helped us, and might help others

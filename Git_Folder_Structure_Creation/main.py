@@ -6,11 +6,12 @@ import git
 from git import Repo, Actor
 
 
+# Function to create the directory structure
 def create_structure(base_path, structure):
     for key, value in structure.items():
         if isinstance(value, str):
             file_path = os.path.join(base_path, key)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Add this line
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, "w") as f:
                 f.write("")
         else:
@@ -21,13 +22,19 @@ def create_structure(base_path, structure):
                 for file_name in value:
                     if file_name != "":
                         file_path = os.path.join(path, file_name)
-                        os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Add this line
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
                         with open(file_path, "w") as f:
                             f.write("")
             elif isinstance(value, dict):
                 create_structure(path, value)
 
 
+# Function to check if the given path is valid or not
+def is_valid_path(path):
+    return os.path.exists(path)
+
+
+# Function to initialize and commit the repository
 def initialize_and_commit_repo(local_path, name, email):
     repo = Repo.init(local_path)
     author = Actor(name, email)
@@ -37,8 +44,9 @@ def initialize_and_commit_repo(local_path, name, email):
     return repo
 
 
+# Function to create and update branches
 def create_and_update_branches(repo):
-    for branch_name in ["dev", "stage", "production", "feature"]:  # Add "feature" to the list
+    for branch_name in ["dev", "stage", "production", "feature"]:
         try:
             branch = repo.heads[branch_name]
             branch.set_commit(repo.head.commit)
@@ -46,12 +54,14 @@ def create_and_update_branches(repo):
             branch = repo.create_head(branch_name)
 
 
+# Function to delete all branches except the 'dev' branch
 def delete_all_branches_except_dev(repo):
     for branch in repo.branches:
         if branch.name != "dev":
             repo.delete_head(branch, force=True)
 
 
+# Function to push the directory structure to the 'dev' branch
 def push_structure_to_dev(repo):
     try:
         repo.git.push("--set-upstream", "origin", "dev")
@@ -60,6 +70,7 @@ def push_structure_to_dev(repo):
         print("Please make sure the repository exists and you have the correct access rights.")
 
 
+# Function to add the remote and push all branches to GitHub
 def add_remote_and_push_to_github(repo, github_repo_url):
     try:
         remote = repo.remotes.origin
@@ -68,13 +79,14 @@ def add_remote_and_push_to_github(repo, github_repo_url):
         remote = repo.create_remote("origin", github_repo_url)
 
     try:
-        for branch in repo.branches:  # Loop through all branches
-            remote.push(branch)  # Push each branch
+        for branch in repo.branches:
+            remote.push(branch)
     except git.GitCommandError as e:
         print("Error pushing to the remote 'origin':", e)
         print("Please make sure the repository exists and you have the correct access rights.")
 
 
+# Function to open the file dialog and browse files
 def browse_files():
     file_path = filedialog.askopenfilename(
         title="Select a JSON file",
@@ -83,12 +95,14 @@ def browse_files():
     return file_path
 
 
+# Function to load the directory structure from a JSON file
 def load_structure_from_json_file(file_path):
     with open(file_path, "r") as f:
         structure = json.load(f)
     return structure
 
 
+# Function to execute when the Apply button is clicked
 def on_apply_button_click():
     local_path = local_path_entry.get().strip()
     github_repo_url = github_repo_url_entry.get().strip()
@@ -96,10 +110,13 @@ def on_apply_button_click():
     email = email_entry.get().strip()
     json_file_path = json_file_path_var.get().strip()
 
+    if not is_valid_path(local_path):
+        print("Invalid local repository path. Exiting.")
+        return
+
     if not json_file_path:
         print("No JSON file selected. Exiting.")
         return
-
     structure = load_structure_from_json_file(json_file_path)
     create_structure(local_path, structure)
     repo = initialize_and_commit_repo(local_path, name, email)
@@ -112,11 +129,13 @@ def on_apply_button_click():
     root.destroy()
 
 
+# Function to execute when the Browse button is clicked
 def on_browse_button_click():
     json_file_path = browse_files()
     json_file_path_var.set(json_file_path)
 
 
+# Function to execute when the Browse Repository button is clicked
 def on_browse_repo_button_click():
     repo_path = filedialog.askdirectory()
     local_path_var.set(repo_path)
